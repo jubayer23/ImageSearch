@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -19,6 +20,7 @@ import net.gotev.uploadservice.UploadInfo;
 import net.gotev.uploadservice.UploadNotificationConfig;
 import net.gotev.uploadservice.UploadStatusDelegate;
 
+import java.io.File;
 import java.util.UUID;
 
 public class UploadActivity extends Activity {
@@ -115,11 +117,48 @@ public class UploadActivity extends Activity {
 
     private void lunchWebViewForSearchInGoogle() {
 
-        String image_name = filePath.substring(filePath.indexOf("IMG")).trim();
+        String image_name=filePath.substring(filePath.lastIndexOf("/")+1);
+        //String image_name = filePath.substring(filePath.indexOf("IMG")).trim();
         Intent i = new Intent(UploadActivity.this, WebViewActivity.class);
         i.putExtra(KEY_SEARCH_URL, Constant.URL_SEARCH + image_name);
+
+        //new File(filePath).delete();
+        clearApplicationData();
+
         startActivity(i);
+
+
         finish();
+    }
+
+    public void clearApplicationData()
+    {
+        File cache = getCacheDir();
+        File appDir = new File(cache.getParent());
+        if (appDir.exists()) {
+            String[] children = appDir.list();
+            for (String s : children) {
+               // Log.d("DEBUG_DIR",s);
+                if (s.equals("cache")) {
+                    deleteDir(new File(appDir, s));
+                    Log.i("TAG", "**************** File /data/data/APP_PACKAGE/" + s + " DELETED *******************");
+                }
+            }
+        }
+    }
+
+    public static boolean deleteDir(File dir)
+    {
+        if (dir != null && dir.isDirectory()) {
+        String[] children = dir.list();
+        for (int i = 0; i < children.length; i++) {
+            boolean success = deleteDir(new File(dir, children[i]));
+            if (!success) {
+                return false;
+            }
+        }
+    }
+        return dir.delete();
     }
 
 
