@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">ImageSearch</string>
+    <string name="action_settings">Settings</string>
+    <string name="btn_take_pic">Capture Image</string>
+    <string name="btn_gallery">Open Gallery</string>
+    <string name="upload_activity">Upload</string>
+    <string name="webview_activity">Web</string>
+    <string name="action_share">Share</string>
+</resources>
