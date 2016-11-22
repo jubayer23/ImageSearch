@@ -6,7 +6,10 @@ import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.Image;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -20,6 +23,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.SearchView;
 import android.widget.Toast;
 
@@ -27,6 +31,16 @@ import com.example.user.imagesearch.alertbanner.AlertDialogForAnything;
 import com.example.user.imagesearch.utils.AccessDirectory;
 import com.example.user.imagesearch.utils.CheckDeviceConfig;
 import com.example.user.imagesearch.utils.MarshMallowPermission;
+import com.theartofdev.edmodo.cropper.CropImage;
+import com.theartofdev.edmodo.cropper.CropImageView;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -107,26 +121,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             startActivityForResult(intent, FROM_CAMERA_CODE);
         }
         if (id == R.id.btn_from_gallery) {
-            Intent intent = new Intent(Intent.ACTION_PICK,
-                    android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            //Intent intent = new Intent(Intent.ACTION_PICK,
+            //        android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+           // intent.setType("image/*");
+            //fileUri = getOutputMediaFileUri();
+            //intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
+           //intent.putExtra("return-data", true);
+            ///intent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.toString());
+           // startActivityForResult(intent, FROM_GALLERY_CODE);
+
+            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("image/*");
-            fileUri = getOutputMediaFileUri();
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
-            intent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.toString());
-            startActivityForResult(getCropIntent(intent), FROM_GALLERY_CODE);
+            intent.putExtra("return-data", true);
+            startActivityForResult(intent, FROM_GALLERY_CODE);
         }
     }
 
 
-    private Intent getCropIntent(Intent intent) {
-        intent.putExtra("crop", "true");
-        intent.putExtra("aspectX", 1);
-        intent.putExtra("aspectY", 1);
-        intent.putExtra("outputX", 320);
-        intent.putExtra("outputY", 320);
-        intent.putExtra("return-data", true);
-        return intent;
-    }
 
 
     public Uri getOutputMediaFileUri() {
@@ -137,29 +149,44 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (resultCode == Activity.RESULT_OK) {
             if (requestCode == FROM_GALLERY_CODE) {
 
-                Toast.makeText(MainActivity.this, "Image Selected From Gallery", Toast.LENGTH_SHORT).show();
-
                 Uri photoUri = data.getData();
-                if (photoUri != null) {
-                    fileUri = photoUri;
-                }
-                launchUploadActivity();
+
+                CropImage.activity(photoUri)
+                        .setGuidelines(CropImageView.Guidelines.ON)
+                        .start(this);
+
+
+                //launchUploadActivity();
             } else if (requestCode == FROM_CAMERA_CODE) {
-
-                Intent intent = new Intent("com.android.camera.action.CROP");
-                intent.setDataAndType(fileUri, "image/*");
-                intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
-                intent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.toString());
-                startActivityForResult(getCropIntent(intent), FROM_GALLERY_CODE);
-
 
                 //Intent intent = new Intent("com.android.camera.action.CROP");
                 //intent.setDataAndType(fileUri, "image/*");
+                //intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
+                // intent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.toString());
+                // startActivityForResult(getCropIntent(intent), FROM_GALLERY_CODE);
+
+                CropImage.activity(fileUri)
+                        .setGuidelines(CropImageView.Guidelines.ON)
+                        .setMultiTouchEnabled(true)
+                        .start(this);
+                //Intent intent = new Intent("com.android.camera.action.CROP");
+                //intent.setDataAndType(fileUri, "image/*");
                 //startActivityForResult(getCropIntent(intent), FROM_GALLERY_CODE);
+            } else if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
+                CropImage.ActivityResult result = CropImage.getActivityResult(data);
+                if (resultCode == RESULT_OK) {
+
+                   // moveFile(result.getUri().getPath(),fileUri.getPath());
+                    fileUri = result.getUri();
+                    launchUploadActivity();
+                } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
+                    Exception error = result.getError();
+                }
             }
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
+
 
 
     private void launchUploadActivity() {
